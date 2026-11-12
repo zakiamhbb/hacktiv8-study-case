@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Case Generator — IBM Global AI Builders Challenge</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ─── Loading Overlay ────────────────────────────────── -->
+<div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+  <div class="spinner" aria-hidden="true"></div>
+  <span>Generating test cases…</span>
+</div>
+
+<!-- ─── Toast ─────────────────────────────────────────── -->
+<div id="toast" role="alert" aria-live="assertive"></div>
+
+<!-- ─── Header ────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="brand">
+    <!-- Beaker icon -->
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9 3h6m-6 0v7L4.5 18A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.9-3L15 10V3"/>
+      <line x1="9" y1="3" x2="15" y2="3"/>
+      <path d="M5 14h14"/>
+    </svg>
+    Test Case Generator
+  </div>
+  <span class="badge">IBM AI Builders Challenge</span>
+</header>
+
+<!-- ─── Main ──────────────────────────────────────────── -->
+<main>
+
+  <!-- ─── Input Section ───────────────────────── -->
+  <div class="two-col">
+
+    <!-- Left: Input -->
+    <section class="card" aria-labelledby="input-heading">
+      <div class="card-header">
+        <h2 class="card-title" id="input-heading">Requirements Input</h2>
+        <button class="btn btn-ghost" id="btnLoadExample" type="button" title="Load example requirements">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
+          Load Example
+        </button>
+      </div>
+      <p class="section-desc">Paste software requirements, user stories, or acceptance criteria. The generator will produce structured test cases covering all major testing categories.</p>
+
+      <div class="form-row">
+        <label for="requirementsInput">Requirements / User Story</label>
+        <textarea id="requirementsInput" placeholder="Example:&#10;As a user, I want to log in with my email and password so that I can access my account.&#10;&#10;Acceptance Criteria:&#10;- Email field is required and must be valid format&#10;- Password must be at least 8 characters&#10;- Show error message if credentials are invalid&#10;- Lock account after 5 failed attempts" rows="10" aria-describedby="reqValidation"></textarea>
+        <span class="validation-msg" id="reqValidation" role="alert">Please enter requirements before generating test cases.</span>
+      </div>
+
+      <div class="form-row">
+        <label for="featureName">Feature / Module Name <span class="text-muted">(optional)</span></label>
+        <input type="text" id="featureName" placeholder="e.g. User Authentication, Shopping Cart, Payment Gateway" />
+      </div>
+
+      <div class="form-row">
+        <label for="categorySelect">Generate test cases for</label>
+        <select id="categorySelect" aria-label="Select testing categories to include">
+          <option value="all">All Categories</option>
+          <option value="positive">Positive / Happy Path only</option>
+          <option value="negative">Negative Testing only</option>
+          <option value="boundary">Boundary Value only</option>
+          <option value="edge">Edge Cases only</option>
+          <option value="validation">Validation only</option>
+          <option value="error">Error Handling only</option>
+        </select>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnGenerate" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate Test Cases
+        </button>
+        <button class="btn btn-secondary" id="btnReset" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.36"/><polyline points="2 17 2 22 7 22"/><polyline points="2 7 2 12"/></svg>
+          Reset
+        </button>
+      </div>
+    </section>
+
+    <!-- Right: Guide -->
+    <section class="card" aria-labelledby="guide-heading">
+      <div class="card-header">
+        <h2 class="card-title" id="guide-heading">Category Guide</h2>
+      </div>
+      <p class="section-desc">The generator covers six test categories based on industry-standard QA practices.</p>
+
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-positive" style="margin-top:2px; min-width:80px; text-align:center;">Positive</span>
+          <span class="text-muted" style="font-size:.85rem;">Validates that the system works correctly when valid inputs and expected conditions are provided.</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-negative" style="margin-top:2px; min-width:80px; text-align:center;">Negative</span>
+          <span class="text-muted" style="font-size:.85rem;">Verifies the system handles invalid or unexpected inputs gracefully without crashing.</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-boundary" style="margin-top:2px; min-width:80px; text-align:center;">Boundary</span>
+          <span class="text-muted" style="font-size:.85rem;">Tests values at, just below, and just above defined boundary limits.</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-edge" style="margin-top:2px; min-width:80px; text-align:center;">Edge Case</span>
+          <span class="text-muted" style="font-size:.85rem;">Examines unusual scenarios, extreme inputs, and combinations that may expose hidden bugs.</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-validation" style="margin-top:2px; min-width:80px; text-align:center;">Validation</span>
+          <span class="text-muted" style="font-size:.85rem;">Ensures field-level and business-rule validations are enforced by the system.</span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:flex-start;">
+          <span class="tag tag-error" style="margin-top:2px; min-width:80px; text-align:center;">Error Handling</span>
+          <span class="text-muted" style="font-size:.85rem;">Confirms that error messages, fallbacks, and recovery paths work correctly.</span>
+        </div>
+      </div>
+
+      <hr />
+      <p class="text-muted" style="font-size:.8rem; line-height:1.65;">
+        <strong style="color:var(--text);">Tip:</strong> The more detail you provide in your requirements — field names, constraints, flows, and edge conditions — the more targeted and meaningful the generated test cases will be. Ambiguous requirements are flagged with a note.
+      </p>
+    </section>
+  </div>
+
+  <!-- ─── Results Section ────────────────────── -->
+  <section id="results-section" class="mt-24" aria-labelledby="results-heading">
+
+    <!-- Stats -->
+    <div id="statsGrid" class="stats-grid" role="region" aria-label="Test case summary"></div>
+
+    <!-- Controls -->
+    <div class="card mt-16">
+      <div class="card-header" style="flex-wrap:wrap; gap:10px;">
+        <h2 class="section-title" id="results-heading" style="margin:0;">Generated Test Cases</h2>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" id="btnCopy" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy to Clipboard
+          </button>
+          <button class="btn btn-primary" id="btnExport" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters" role="search" aria-label="Filter test cases">
+        <label for="filterCategory" style="margin:0; font-size:.85rem; color:var(--muted); white-space:nowrap;">Filter by:</label>
+        <select id="filterCategory" aria-label="Filter by category">
+          <option value="all">All Categories</option>
+          <option value="Positive">Positive</option>
+          <option value="Negative">Negative</option>
+          <option value="Boundary">Boundary</option>
+          <option value="Edge Case">Edge Case</option>
+          <option value="Validation">Validation</option>
+          <option value="Error Handling">Error Handling</option>
+        </select>
+        <select id="filterPriority" aria-label="Filter by priority">
+          <option value="all">All Priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <span id="filterCount" class="text-muted" aria-live="polite"></span>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap" role="region" aria-label="Test cases table" tabindex="0">
+        <table id="testCaseTable" aria-label="Generated test cases">
+          <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Title</th>
+              <th scope="col">Category</th>
+              <th scope="col">Priority</th>
+              <th scope="col">Preconditions</th>
+              <th scope="col">Test Steps</th>
+              <th scope="col">Test Data</th>
+              <th scope="col">Expected Result</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="testCaseBody">
+            <!-- rows injected by app.js -->
+          </tbody>
+        </table>
+        <div class="empty-state" id="emptyState" aria-live="polite">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <p>No test cases match the current filters. Try changing the filter selection.</p>
+        </div>
+      </div>
+
+      <p class="text-muted mt-8">Click on a cell to edit inline. Edits do not persist after page reload.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
