@@ -380,3 +380,25 @@ hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
 
 #results-section { display: none; }
 #results-section.visible { display: block; }
+
+/* ─────────────────────────────────────────────
+   API Status Indicator
+───────────────────────────────────────────── */
+.api-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-2);
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.status-dot.dot-online  { background: var(--green); }
+.status-dot.dot-offline { background: var(--muted); }
+.status-text { white-space: nowrap; }

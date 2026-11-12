@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Test Case Generator — IBM Global AI Builders Challenge</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>Test Case Workspace — QA Planning Tool</title>
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
 
 <!-- ─── Loading Overlay ────────────────────────────────── -->
 <div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
   <div class="spinner" aria-hidden="true"></div>
-  <span>Generating test cases…</span>
+  <span>Building test cases…</span>
 </div>
 
 <!-- ─── Toast ─────────────────────────────────────────── -->
@@ -20,15 +20,20 @@
 <!-- ─── Header ────────────────────────────────────────── -->
 <header class="app-header">
   <div class="brand">
-    <!-- Beaker icon -->
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M9 3h6m-6 0v7L4.5 18A2 2 0 0 0 6.4 21h11.2a2 2 0 0 0 1.9-3L15 10V3"/>
-      <line x1="9" y1="3" x2="15" y2="3"/>
-      <path d="M5 14h14"/>
+    <!-- Grid / workspace icon -->
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
     </svg>
-    Test Case Generator
+    TC Workspace
   </div>
-  <span class="badge">IBM AI Builders Challenge</span>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <div class="api-status" aria-live="polite" title="Backend connection status">
+      <span class="status-dot" id="apiStatusDot"></span>
+      <span class="status-text" id="apiStatusText">Checking…</span>
+    </div>
+    <span class="badge">QA Planning Tool</span>
+  </div>
 </header>
 
 <!-- ─── Main ──────────────────────────────────────────── -->
@@ -40,18 +45,18 @@
     <!-- Left: Input -->
     <section class="card" aria-labelledby="input-heading">
       <div class="card-header">
-        <h2 class="card-title" id="input-heading">Requirements Input</h2>
+        <h2 class="card-title" id="input-heading">Requirements</h2>
         <button class="btn btn-ghost" id="btnLoadExample" type="button" title="Load example requirements">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"/></svg>
           Load Example
         </button>
       </div>
-      <p class="section-desc">Paste software requirements, user stories, or acceptance criteria. The generator will produce structured test cases covering all major testing categories.</p>
+      <p class="section-desc">Paste software requirements, user stories, or acceptance criteria. Test cases will be built to cover all major testing categories.</p>
 
       <div class="form-row">
-        <label for="requirementsInput">Requirements / User Story</label>
+        <label for="requirementsInput">Requirements / User Story <span class="text-muted">(free text)</span></label>
         <textarea id="requirementsInput" placeholder="Example:&#10;As a user, I want to log in with my email and password so that I can access my account.&#10;&#10;Acceptance Criteria:&#10;- Email field is required and must be valid format&#10;- Password must be at least 8 characters&#10;- Show error message if credentials are invalid&#10;- Lock account after 5 failed attempts" rows="10" aria-describedby="reqValidation"></textarea>
-        <span class="validation-msg" id="reqValidation" role="alert">Please enter requirements before generating test cases.</span>
+        <span class="validation-msg" id="reqValidation" role="alert">Please enter requirements before building test cases.</span>
       </div>
 
       <div class="form-row">
@@ -60,7 +65,7 @@
       </div>
 
       <div class="form-row">
-        <label for="categorySelect">Generate test cases for</label>
+        <label for="categorySelect">Test categories to include</label>
         <select id="categorySelect" aria-label="Select testing categories to include">
           <option value="all">All Categories</option>
           <option value="positive">Positive / Happy Path only</option>
@@ -74,8 +79,8 @@
 
       <div class="btn-row">
         <button class="btn btn-primary" id="btnGenerate" type="button">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-          Generate Test Cases
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          Build Test Cases
         </button>
         <button class="btn btn-secondary" id="btnReset" type="button">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 1 2.6 6.36"/><polyline points="2 17 2 22 7 22"/><polyline points="2 7 2 12"/></svg>
@@ -87,9 +92,9 @@
     <!-- Right: Guide -->
     <section class="card" aria-labelledby="guide-heading">
       <div class="card-header">
-        <h2 class="card-title" id="guide-heading">Category Guide</h2>
+        <h2 class="card-title" id="guide-heading">Testing Categories</h2>
       </div>
-      <p class="section-desc">The generator covers six test categories based on industry-standard QA practices.</p>
+      <p class="section-desc">Six test categories based on industry-standard QA practices. Select all or focus on a specific category.</p>
 
       <div style="display:flex; flex-direction:column; gap:10px;">
         <div style="display:flex; gap:10px; align-items:flex-start;">
@@ -120,7 +125,7 @@
 
       <hr />
       <p class="text-muted" style="font-size:.8rem; line-height:1.65;">
-        <strong style="color:var(--text);">Tip:</strong> The more detail you provide in your requirements — field names, constraints, flows, and edge conditions — the more targeted and meaningful the generated test cases will be. Ambiguous requirements are flagged with a note.
+        <strong style="color:var(--text);">Tip:</strong> The more detail you include — field names, constraints, flows, and edge conditions — the more targeted and meaningful the test cases will be.
       </p>
     </section>
   </div>
@@ -134,7 +139,7 @@
     <!-- Controls -->
     <div class="card mt-16">
       <div class="card-header" style="flex-wrap:wrap; gap:10px;">
-        <h2 class="section-title" id="results-heading" style="margin:0;">Generated Test Cases</h2>
+        <h2 class="section-title" id="results-heading" style="margin:0;">Test Cases</h2>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn btn-secondary" id="btnCopy" type="button">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
@@ -194,12 +199,12 @@
         </div>
       </div>
 
-      <p class="text-muted mt-8">Click on a cell to edit inline. Edits do not persist after page reload.</p>
+      <p class="text-muted mt-8">Click any cell to edit inline. Changes are in-memory and will not persist after reload.</p>
     </div>
   </section>
 
 </main>
 
-<script src="app.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

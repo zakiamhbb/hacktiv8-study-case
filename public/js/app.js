@@ -1,14 +1,12 @@
 /* =====================================================================
-   TEST CASE GENERATOR — Client-Side Logic
-   IBM Global AI Builders Challenge
+   TC Workspace — Client-Side Logic
    =====================================================================
    Architecture:
-   ─ Generator:     rule-based NLP analysis producing structured test cases
+   ─ Generator:     Gemini API (via /api/generate proxy) with rule-based fallback
    ─ Store:         in-memory array (testCases[])
    ─ Renderer:      renders store to DOM table
    ─ Filters:       filterCategory / filterPriority selections
    ─ Export/Copy:   CSV serialization
-   ─ LLM hook:      generateWithLLM() stub — swap in real API call later
 
    All test case IDs follow the pattern TC-<FEATURE>-<CATEGORY>-<SEQ>
    ===================================================================== */
@@ -16,6 +14,7 @@
 // ── State ──────────────────────────────────────────────────────────
 let testCases = [];    // { id, title, category, priority, preconditions, steps[], testData, expected }
 let idCounter = 1;
+let geminiAvailable = false;  // set to true after /api/status check succeeds
 
 // ── DOM refs ────────────────────────────────────────────────────────
 const requirementsInput = document.getElementById('requirementsInput');
@@ -36,6 +35,8 @@ const resultsSection    = document.getElementById('results-section');
 const loadingOverlay    = document.getElementById('loadingOverlay');
 const reqValidation     = document.getElementById('reqValidation');
 const toast             = document.getElementById('toast');
+const apiStatusDot      = document.getElementById('apiStatusDot');
+const apiStatusText     = document.getElementById('apiStatusText');
 
 // ── Category styling map ────────────────────────────────────────────
 const CAT_CLASS = {
@@ -72,6 +73,28 @@ Acceptance Criteria:
 
 const EXAMPLE_FEATURE = 'User Login';
 
+// ── Check Gemini API availability on load ────────────────────────────
+(async function checkApiStatus() {
+  try {
+    const res = await fetch('/api/status');
+    if (res.ok) {
+      const data = await res.json();
+      geminiAvailable = data.ok === true;
+    }
+  } catch {
+    geminiAvailable = false;
+  }
+  if (apiStatusDot && apiStatusText) {
+    if (geminiAvailable) {
+      apiStatusDot.classList.add('dot-online');
+      apiStatusText.textContent = 'Gemini connected';
+    } else {
+      apiStatusDot.classList.add('dot-offline');
+      apiStatusText.textContent = 'Rule-based mode';
+    }
+  }
+})();
+
 // ── Load Example ────────────────────────────────────────────────────
 btnLoadExample.addEventListener('click', () => {
   requirementsInput.value = EXAMPLE_REQ;
@@ -106,8 +129,6 @@ btnGenerate.addEventListener('click', async () => {
   hideValidation();
 
   showLoading(true);
-  // Simulated async generation delay (deterministic, no external call)
-  await delay(900);
 
   const feature = featureName.value.trim() || 'Feature';
   const catFilter = categorySelect.value;
@@ -115,9 +136,20 @@ btnGenerate.addEventListener('click', async () => {
   testCases = [];
   idCounter = 1;
 
-  // ── Core generation ──────────────────────────────────────────────
-  // LLM hook: replace generateTestCases() with generateWithLLM() for AI integration
-  const generated = generateTestCases(req, feature);
+  let generated;
+  if (geminiAvailable) {
+    // ── Gemini path ─────────────────────────────────────────────────
+    generated = await generateWithLLM(req, feature);
+    if (!generated) {
+      // Gemini call failed at runtime — fall back silently
+      generated = generateTestCases(req, feature);
+      showToast('Gemini unavailable — using rule-based mode.', 'error');
+    }
+  } else {
+    // ── Rule-based fallback ─────────────────────────────────────────
+    await delay(700);
+    generated = generateTestCases(req, feature);
+  }
 
   // Apply category filter from generation form
   const filtered = catFilter === 'all'
@@ -131,7 +163,7 @@ btnGenerate.addEventListener('click', async () => {
   renderTable();
   resultsSection.classList.add('visible');
   resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  showToast(`${testCases.length} test cases generated.`, 'success');
+  showToast(`${testCases.length} test cases built.`, 'success');
 });
 
 // ── Filters ───────────────────────────────────────────────────────────
@@ -166,22 +198,33 @@ btnCopy.addEventListener('click', async () => {
 
 // =====================================================================
 //  GENERATION ENGINE
-//  Modular, rule-based. Swap generateTestCases() for LLM calls later.
 // =====================================================================
 
 /**
- * LLM hook stub — replace this function body with a real fetch() call to
- * an LLM API endpoint. The return value must be the same format as
- * generateTestCases(): an array of test case objects.
+ * Calls the Gemini proxy server at /api/generate.
+ * Returns a TestCase[] array or null if the request fails.
  */
-// async function generateWithLLM(requirements, featureName) {
-//   const response = await fetch('/api/generate', {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({ requirements, featureName })
-//   });
-//   return await response.json(); // must return TestCase[]
-// }
+async function generateWithLLM(requirements, featureName) {
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirements, featureName }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('[app] /api/generate error:', res.status, err);
+      return null;
+    }
+    const data = await res.json();
+    // Validate the shape minimally before handing to the renderer
+    if (!Array.isArray(data)) { console.error('[app] Unexpected response shape'); return null; }
+    return data;
+  } catch (e) {
+    console.error('[app] generateWithLLM fetch failed:', e);
+    return null;
+  }
+}
 
 /**
  * Main generation function.
